@@ -1,19 +1,24 @@
 // Use Const Generics.
 #[allow(dead_code)]
 #[derive(Debug)]
-struct Board<T, const ROWS: usize, const COLS: usize> {
+struct Board<T> {
     // 2D array.
     // The size will be customizable.
-    elems: [[T; COLS]; ROWS],
+    // Runtime value (dynamic).
+    elems: Vec<T>,
+    rows: usize,
+    cols: usize,
 }
 
-impl<T, const ROWS: usize, const COLS: usize> Default for Board<T, ROWS, COLS>
+impl<T> Board<T>
 where
-    T: Default + Copy,
+    T: Clone + Copy,
 {
-    fn default() -> Self {
+    fn new(rows: usize, cols: usize, x: T) -> Self {
         Self {
-            elems: [[T::default(); COLS]; ROWS],
+            rows,
+            cols,
+            elems: vec![x; rows * cols],
         }
     }
 }
@@ -22,7 +27,7 @@ where
 #[derive(Clone, Copy)]
 enum Cell {
     Empty,
-    RoomFloor,
+    Floor,
     VertWall,
     HorzWall,
     Passage,
@@ -40,7 +45,7 @@ impl Cell {
     fn to_char(self) -> char {
         match self {
             Cell::Empty => ' ',
-            Cell::RoomFloor => '.',
+            Cell::Floor => '.',
             Cell::VertWall => '|',
             Cell::HorzWall => '-',
             Cell::Passage => '#',
@@ -50,6 +55,6 @@ impl Cell {
 }
 
 fn main() {
-    let _board = Board::<Cell, 10, 10>::default();
+    let _board = Board::<Cell>::new(10, 10, Cell::Floor);
     println!("{}", Cell::Passage.to_char());
 }
