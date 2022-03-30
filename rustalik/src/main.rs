@@ -1,15 +1,19 @@
 // Use Const Generics.
 #[allow(dead_code)]
 #[derive(Debug)]
-struct Board<T, const N: usize> {
+struct Board<T, const ROWS: usize, const COLS: usize> {
+    // 2D array.
     // The size will be customizable.
-    elems: [T; N],
+    elems: [[T; COLS]; ROWS],
 }
 
-impl<T: Default + Copy, const N: usize> Default for Board<T, N> {
+impl<T, const ROWS: usize, const COLS: usize> Default for Board<T, ROWS, COLS>
+where
+    T: Default + Copy,
+{
     fn default() -> Self {
         Self {
-            elems: [T::default(); N],
+            elems: [[T::default(); COLS]; ROWS],
         }
     }
 }
@@ -46,6 +50,6 @@ impl Cell {
 }
 
 fn main() {
-    let _board = Board::<Cell, 10>::default();
+    let _board = Board::<Cell, 10, 10>::default();
     println!("{}", Cell::Passage.to_char());
 }
