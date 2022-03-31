@@ -1,5 +1,5 @@
-// Use Const Generics.
-#[allow(dead_code)]
+use std::ops::{Index, Range};
+
 #[derive(Debug)]
 struct Board<T> {
     // 2D array.
@@ -21,6 +21,21 @@ where
             elems: vec![x; rows * cols],
         }
     }
+
+    fn rows_range(&self) -> Range<usize> {
+        0..self.rows
+    }
+
+    fn cols_range(&self) -> Range<usize> {
+        0..self.cols
+    }
+}
+
+impl<T> Index<(usize, usize)> for Board<T> {
+    type Output = T;
+    fn index(&self, (row, col): (usize, usize)) -> &Self::Output {
+        &self.elems[row * self.cols + col]
+    }
 }
 
 #[allow(dead_code)]
@@ -41,7 +56,6 @@ impl Default for Cell {
 }
 
 impl Cell {
-    #[allow(dead_code)]
     fn to_char(self) -> char {
         match self {
             Cell::Empty => ' ',
@@ -55,6 +69,11 @@ impl Cell {
 }
 
 fn main() {
-    let _board = Board::<Cell>::new(10, 10, Cell::Floor);
-    println!("{}", Cell::Passage.to_char());
+    let board = Board::<Cell>::new(10, 10, Cell::Floor);
+    for row in board.rows_range() {
+        for col in board.cols_range() {
+            print!("{}", board[(row, col)].to_char());
+        }
+        println!();
+    }
 }
