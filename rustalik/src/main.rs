@@ -1,4 +1,24 @@
-use std::ops::{Index, Range};
+use std::cmp::{max, min};
+use std::ops::{Index, IndexMut, Range};
+
+#[allow(dead_code)]
+#[derive(Clone, Copy)]
+struct Point(usize, usize);
+
+#[allow(dead_code)]
+#[derive(Clone, Copy)]
+struct Rectangle(Point, Point);
+
+impl Rectangle {
+    #[allow(dead_code)]
+    fn normalize(self) -> Self {
+        let Rectangle(Point(row1, col1), Point(row2, col2)) = self;
+        Rectangle(
+            Point(min(row1, row2), min(col1, col2)),
+            Point(max(row1, row2), max(col1, col2)),
+        )
+    }
+}
 
 #[derive(Debug)]
 struct Board<T> {
@@ -29,12 +49,28 @@ where
     fn cols_range(&self) -> Range<usize> {
         0..self.cols
     }
+
+    #[allow(dead_code)]
+    fn fill_rectangle(&mut self, rectangle: Rectangle, x: T) {
+        let Rectangle(Point(row1, col1), Point(row2, col2)) = rectangle.normalize();
+        for row in row1..=row2 {
+            for col in col1..=col2 {
+                self[Point(row, col)] = x;
+            }
+        }
+    }
 }
 
-impl<T> Index<(usize, usize)> for Board<T> {
+impl<T> Index<Point> for Board<T> {
     type Output = T;
-    fn index(&self, (row, col): (usize, usize)) -> &Self::Output {
+    fn index(&self, Point(row, col): Point) -> &Self::Output {
         &self.elems[row * self.cols + col]
+    }
+}
+
+impl<T> IndexMut<Point> for Board<T> {
+    fn index_mut(&mut self, Point(row, col): Point) -> &mut Self::Output {
+        &mut self.elems[row * self.cols + col]
     }
 }
 
@@ -69,10 +105,11 @@ impl Cell {
 }
 
 fn main() {
+    // let p = Point(10, 10);
     let board = Board::<Cell>::new(10, 10, Cell::Floor);
     for row in board.rows_range() {
         for col in board.cols_range() {
-            print!("{}", board[(row, col)].to_char());
+            print!("{}", board[Point(row, col)].to_char());
         }
         println!();
     }
