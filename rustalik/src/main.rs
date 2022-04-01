@@ -1,22 +1,36 @@
-use std::cmp::{max, min};
 use std::ops::{Index, IndexMut, Range};
 
-#[allow(dead_code)]
-#[derive(Clone, Copy)]
-struct Point(usize, usize);
+use geometry::Rectangle;
 
-#[allow(dead_code)]
-#[derive(Clone, Copy)]
-struct Rectangle(Point, Point);
+use crate::geometry::Point;
 
-impl Rectangle {
+mod geometry {
+    use std::cmp::{max, min};
+
     #[allow(dead_code)]
-    fn normalize(self) -> Self {
-        let Rectangle(Point(row1, col1), Point(row2, col2)) = self;
-        Rectangle(
-            Point(min(row1, row2), min(col1, col2)),
-            Point(max(row1, row2), max(col1, col2)),
-        )
+    #[derive(Clone, Copy)]
+    pub struct Point(pub usize, pub usize);
+
+    #[allow(dead_code)]
+    #[derive(Clone, Copy)]
+    pub struct Rectangle(Point, Point);
+
+    impl Rectangle {
+        #[allow(dead_code)]
+        pub fn new(Point(row1, col1): Point, Point(row2, col2): Point) -> Self {
+            Self(
+                Point(min(row1, row2), min(col1, col2)),
+                Point(max(row1, row2), max(col1, col2)),
+            )
+        }
+
+        pub fn corner1(&self) -> &Point {
+            &self.0
+        }
+
+        pub fn corner2(&self) -> &Point {
+            &self.1
+        }
     }
 }
 
@@ -52,7 +66,9 @@ where
 
     #[allow(dead_code)]
     fn fill_rectangle(&mut self, rectangle: Rectangle, x: T) {
-        let Rectangle(Point(row1, col1), Point(row2, col2)) = rectangle.normalize();
+        let Point(row1, col1) = *rectangle.corner1();
+        let Point(row2, col2) = *rectangle.corner2();
+        // let Rectangle(Point(row1, col1), Point(row2, col2)) = rectangle.normalize();
         for row in row1..=row2 {
             for col in col1..=col2 {
                 self[Point(row, col)] = x;
