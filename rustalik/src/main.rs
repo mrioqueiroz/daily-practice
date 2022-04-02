@@ -1,17 +1,12 @@
-use std::ops::{Index, IndexMut, Range};
+use crate::board::{Board, Point, Rectangle};
 
-use geometry::Rectangle;
-
-use crate::geometry::Point;
-
-mod geometry {
+mod board {
     use std::cmp::{max, min};
+    use std::ops::{Index, IndexMut, Range};
 
-    #[allow(dead_code)]
     #[derive(Clone, Copy)]
     pub struct Point(pub usize, pub usize);
 
-    #[allow(dead_code)]
     #[derive(Clone, Copy)]
     pub struct Rectangle(Point, Point);
 
@@ -24,69 +19,79 @@ mod geometry {
             )
         }
 
+        #[allow(dead_code)]
         pub fn corner1(&self) -> &Point {
             &self.0
         }
 
+        #[allow(dead_code)]
         pub fn corner2(&self) -> &Point {
             &self.1
         }
     }
-}
 
-#[derive(Debug)]
-struct Board<T> {
-    // 2D array.
-    // The size will be customizable.
-    // Runtime value (dynamic).
-    elems: Vec<T>,
-    rows: usize,
-    cols: usize,
-}
-
-impl<T> Board<T>
-where
-    T: Clone + Copy,
-{
-    fn new(rows: usize, cols: usize, x: T) -> Self {
-        Self {
-            rows,
-            cols,
-            elems: vec![x; rows * cols],
-        }
+    #[derive(Debug)]
+    pub struct Board<T> {
+        // 2D array.
+        // The size will be customizable.
+        // Runtime value (dynamic).
+        elems: Vec<T>,
+        rows: usize,
+        cols: usize,
     }
 
-    fn rows_range(&self) -> Range<usize> {
-        0..self.rows
-    }
-
-    fn cols_range(&self) -> Range<usize> {
-        0..self.cols
-    }
-
-    #[allow(dead_code)]
-    fn fill_rectangle(&mut self, rectangle: Rectangle, x: T) {
-        let Point(row1, col1) = *rectangle.corner1();
-        let Point(row2, col2) = *rectangle.corner2();
-        // let Rectangle(Point(row1, col1), Point(row2, col2)) = rectangle.normalize();
-        for row in row1..=row2 {
-            for col in col1..=col2 {
-                self[Point(row, col)] = x;
+    impl<T> Board<T>
+    where
+        T: Clone + Copy,
+    {
+        pub fn new(rows: usize, cols: usize, x: T) -> Self {
+            Self {
+                rows,
+                cols,
+                elems: vec![x; rows * cols],
             }
         }
-    }
-}
 
-impl<T> Index<Point> for Board<T> {
-    type Output = T;
-    fn index(&self, Point(row, col): Point) -> &Self::Output {
-        &self.elems[row * self.cols + col]
-    }
-}
+        #[allow(dead_code)]
+        pub fn rectangle(&self) -> Rectangle {
+            Rectangle(Point(0, 0), Point(self.rows - 1, self.cols - 1))
+        }
 
-impl<T> IndexMut<Point> for Board<T> {
-    fn index_mut(&mut self, Point(row, col): Point) -> &mut Self::Output {
-        &mut self.elems[row * self.cols + col]
+        pub fn rows_range(&self) -> Range<usize> {
+            0..self.rows
+        }
+
+        pub fn cols_range(&self) -> Range<usize> {
+            0..self.cols
+        }
+
+        #[allow(dead_code)]
+        pub fn fill_rectangle(&mut self, rectangle: Rectangle, x: T) {
+            let Rectangle(Point(row1, col1), Point(row2, col2)) = rectangle;
+            for row in row1..=row2 {
+                for col in col1..=col2 {
+                    self[Point(row, col)] = x;
+                }
+            }
+        }
+
+        #[allow(dead_code)]
+        pub fn contains(&self, Point(row, col): Point) -> bool {
+            (0..self.rows).contains(&row) && (0..self.cols).contains(&col)
+        }
+    }
+
+    impl<T> Index<Point> for Board<T> {
+        type Output = T;
+        fn index(&self, Point(row, col): Point) -> &Self::Output {
+            &self.elems[row * self.cols + col]
+        }
+    }
+
+    impl<T> IndexMut<Point> for Board<T> {
+        fn index_mut(&mut self, Point(row, col): Point) -> &mut Self::Output {
+            &mut self.elems[row * self.cols + col]
+        }
     }
 }
 
@@ -120,12 +125,44 @@ impl Cell {
     }
 }
 
+#[allow(dead_code)]
+struct Rogalik {
+    board: Board<Cell>,
+    player_pos: Point,
+}
+
+impl Rogalik {
+    #[allow(dead_code)]
+    fn new(rows: usize, cols: usize) -> Self {
+        Rogalik {
+            board: Board::new(rows, cols, Cell::Floor),
+            player_pos: Point(0, 0),
+        }
+    }
+
+    fn render(&self, display: &mut Board<char>) {
+        for row in self.board.rows_range() {
+            for col in self.board.cols_range() {
+                let point = Point(row, col);
+                if display.contains(point) {
+                    display[point] = self.board[point].to_char();
+                }
+            }
+        }
+    }
+}
+
 fn main() {
-    // let p = Point(10, 10);
-    let board = Board::<Cell>::new(10, 10, Cell::Floor);
-    for row in board.rows_range() {
-        for col in board.cols_range() {
-            print!("{}", board[Point(row, col)].to_char());
+    const WIDTH: usize = 10;
+    const HEIGHT: usize = 10;
+    let mut display = Board::new(WIDTH, HEIGHT, ' ');
+    let mut rogalik = Rogalik::new(WIDTH, HEIGHT);
+
+    rogalik.render(&mut display);
+
+    for row in display.rows_range() {
+        for col in display.cols_range() {
+            print!("{}", display[Point(row, col)]);
         }
         println!();
     }
