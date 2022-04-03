@@ -98,6 +98,14 @@ mod board {
         pub fn contains(&self, Point(row, col): Point) -> bool {
             (0..self.rows).contains(&row) && (0..self.cols).contains(&col)
         }
+
+        pub fn get(&self, point: Point) -> Option<&T> {
+            if self.contains(point) {
+                Some(&self[point])
+            } else {
+                None
+            }
+        }
     }
 
     impl<T> Index<Point> for Board<T> {
@@ -163,6 +171,18 @@ impl Default for Cell {
 }
 
 impl Cell {
+    #[allow(dead_code)]
+    fn is_walkable(&self) -> bool {
+        match self {
+            Cell::Empty => false, // the void of the game.
+            Cell::Floor => true,
+            Cell::VertWall => false,
+            Cell::HorzWall => false,
+            Cell::Passage => true,
+            Cell::Door => true,
+        }
+    }
+
     fn to_char(self) -> char {
         match self {
             Cell::Empty => ' ',
@@ -209,7 +229,13 @@ impl Rogalik {
 
     #[allow(dead_code)]
     fn move_to(&mut self, dir: Direction) {
-        self.player_pos = self.player_pos + dir.to_vec2();
+        let next_pos = self.player_pos + dir.to_vec2();
+        if let Some(cell) = self.board.get(next_pos) {
+            if cell.is_walkable() {
+                self.player_pos = next_pos;
+            }
+        }
+        if self.board.contains(next_pos) && self.board[next_pos].is_walkable() {}
     }
 
     #[allow(dead_code)]
