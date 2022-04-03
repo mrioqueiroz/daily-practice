@@ -1,11 +1,30 @@
-use crate::board::{Board, Point, Rectangle};
+use std::io::Write;
+
+use board::Vec2;
+
+use crate::board::{Board, Point};
 
 mod board {
     use std::cmp::{max, min};
-    use std::ops::{Index, IndexMut, Range};
+    use std::ops::{Add, Index, IndexMut, Range};
 
     #[derive(Clone, Copy)]
     pub struct Point(pub usize, pub usize);
+
+    impl Add<Vec2> for Point {
+        type Output = Point;
+        fn add(self, Vec2(drow, dcol): Vec2) -> Self::Output {
+            let Point(row, col) = self;
+            // drow can be negative.
+            Point(
+                (row as isize + drow) as usize,
+                (col as isize + dcol) as usize,
+            )
+        }
+    }
+
+    #[derive(Clone, Copy)]
+    pub struct Vec2(pub isize, pub isize);
 
     #[derive(Clone, Copy)]
     pub struct Rectangle(Point, Point);
@@ -106,6 +125,37 @@ enum Cell {
     Door,
 }
 
+#[allow(dead_code)]
+#[derive(Copy, Clone)]
+enum Direction {
+    N,
+    S,
+    E,
+    W,
+}
+
+impl Direction {
+    #[allow(dead_code)]
+    fn to_vec2(self) -> Vec2 {
+        match self {
+            Self::N => Vec2(-1, 0),
+            Self::S => Vec2(1, 0),
+            Self::E => Vec2(0, 1),
+            Self::W => Vec2(0, -1),
+        }
+    }
+
+    fn from_key(key: char) -> Option<Self> {
+        match key {
+            'k' => Some(Self::N),
+            'j' => Some(Self::S),
+            'l' => Some(Self::E),
+            'h' => Some(Self::W),
+            _ => None,
+        }
+    }
+}
+
 impl Default for Cell {
     fn default() -> Self {
         Cell::Empty
@@ -129,6 +179,7 @@ impl Cell {
 struct Rogalik {
     board: Board<Cell>,
     player_pos: Point,
+    quit: bool,
 }
 
 impl Rogalik {
@@ -137,10 +188,12 @@ impl Rogalik {
         Rogalik {
             board: Board::new(rows, cols, Cell::Floor),
             player_pos: Point(0, 0),
+            quit: false,
         }
     }
 
     fn render(&self, display: &mut Board<char>) {
+        display.fill_rectangle(display.rectangle(), ' ');
         for row in self.board.rows_range() {
             for col in self.board.cols_range() {
                 let point = Point(row, col);
@@ -153,20 +206,53 @@ impl Rogalik {
             display[self.player_pos] = '@';
         }
     }
+
+    #[allow(dead_code)]
+    fn move_to(&mut self, dir: Direction) {
+        self.player_pos = self.player_pos + dir.to_vec2();
+    }
+
+    #[allow(dead_code)]
+    fn quit(&mut self) {
+        self.quit = true;
+    }
 }
 
-fn main() {
-    const WIDTH: usize = 10;
-    const HEIGHT: usize = 10;
-    let mut display = Board::new(WIDTH, HEIGHT, ' ');
-    let mut rogalik = Rogalik::new(WIDTH, HEIGHT);
-
-    rogalik.render(&mut display);
-
+#[allow(dead_code)]
+fn print_display(display: &Board<char>) {
     for row in display.rows_range() {
         for col in display.cols_range() {
             print!("{}", display[Point(row, col)]);
         }
         println!();
+    }
+}
+
+fn main() {
+    use std::io;
+
+    const WIDTH: usize = 10;
+    const HEIGHT: usize = 10;
+
+    let mut display = Board::new(WIDTH, HEIGHT, ' ');
+    let mut rogalik = Rogalik::new(WIDTH, HEIGHT);
+    let mut line = String::new();
+
+    rogalik.render(&mut display);
+    print_display(&display);
+    while !rogalik.quit {
+        print!("> ");
+        io::stdout().flush().unwrap();
+        line.clear();
+        io::stdin().read_line(&mut line).unwrap();
+        for key in line.chars() {
+            if let Some(dir) = Direction::from_key(key) {
+                rogalik.move_to(dir);
+            } else {
+                println!("unknown key {}", key);
+            }
+        }
+        rogalik.render(&mut display);
+        print_display(&display);
     }
 }
