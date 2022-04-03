@@ -149,6 +149,9 @@ impl Rogalik {
                 }
             }
         }
+        if display.contains(self.player_pos) {
+            display[self.player_pos] = '@';
+        }
     }
 }
 
