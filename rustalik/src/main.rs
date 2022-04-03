@@ -2,7 +2,7 @@ use std::io::Write;
 
 use board::Vec2;
 
-use crate::board::{Board, Point};
+use crate::board::{Board, Point, Rectangle};
 
 mod board {
     use std::cmp::{max, min};
@@ -30,7 +30,6 @@ mod board {
     pub struct Rectangle(Point, Point);
 
     impl Rectangle {
-        #[allow(dead_code)]
         pub fn new(Point(row1, col1): Point, Point(row2, col2): Point) -> Self {
             Self(
                 Point(min(row1, row2), min(col1, col2)),
@@ -71,7 +70,6 @@ mod board {
             }
         }
 
-        #[allow(dead_code)]
         pub fn rectangle(&self) -> Rectangle {
             Rectangle(Point(0, 0), Point(self.rows - 1, self.cols - 1))
         }
@@ -84,7 +82,6 @@ mod board {
             0..self.cols
         }
 
-        #[allow(dead_code)]
         pub fn fill_rectangle(&mut self, rectangle: Rectangle, x: T) {
             let Rectangle(Point(row1, col1), Point(row2, col2)) = rectangle;
             for row in row1..=row2 {
@@ -94,7 +91,6 @@ mod board {
             }
         }
 
-        #[allow(dead_code)]
         pub fn contains(&self, Point(row, col): Point) -> bool {
             (0..self.rows).contains(&row) && (0..self.cols).contains(&col)
         }
@@ -133,7 +129,6 @@ enum Cell {
     Door,
 }
 
-#[allow(dead_code)]
 #[derive(Copy, Clone)]
 enum Direction {
     N,
@@ -143,23 +138,12 @@ enum Direction {
 }
 
 impl Direction {
-    #[allow(dead_code)]
     fn to_vec2(self) -> Vec2 {
         match self {
             Self::N => Vec2(-1, 0),
             Self::S => Vec2(1, 0),
             Self::E => Vec2(0, 1),
             Self::W => Vec2(0, -1),
-        }
-    }
-
-    fn from_key(key: char) -> Option<Self> {
-        match key {
-            'k' => Some(Self::N),
-            'j' => Some(Self::S),
-            'l' => Some(Self::E),
-            'h' => Some(Self::W),
-            _ => None,
         }
     }
 }
@@ -171,7 +155,6 @@ impl Default for Cell {
 }
 
 impl Cell {
-    #[allow(dead_code)]
     fn is_walkable(&self) -> bool {
         match self {
             Cell::Empty => false, // the void of the game.
@@ -195,7 +178,6 @@ impl Cell {
     }
 }
 
-#[allow(dead_code)]
 struct Rogalik {
     board: Board<Cell>,
     player_pos: Point,
@@ -203,10 +185,9 @@ struct Rogalik {
 }
 
 impl Rogalik {
-    #[allow(dead_code)]
     fn new(rows: usize, cols: usize) -> Self {
         Rogalik {
-            board: Board::new(rows, cols, Cell::Floor),
+            board: Board::new(rows, cols, Cell::Empty),
             player_pos: Point(0, 0),
             quit: false,
         }
@@ -227,7 +208,6 @@ impl Rogalik {
         }
     }
 
-    #[allow(dead_code)]
     fn move_to(&mut self, dir: Direction) {
         let next_pos = self.player_pos + dir.to_vec2();
         if let Some(cell) = self.board.get(next_pos) {
@@ -238,13 +218,11 @@ impl Rogalik {
         if self.board.contains(next_pos) && self.board[next_pos].is_walkable() {}
     }
 
-    #[allow(dead_code)]
     fn quit(&mut self) {
         self.quit = true;
     }
 }
 
-#[allow(dead_code)]
 fn print_display(display: &Board<char>) {
     for row in display.rows_range() {
         for col in display.cols_range() {
@@ -264,6 +242,10 @@ fn main() {
     let mut rogalik = Rogalik::new(WIDTH, HEIGHT);
     let mut line = String::new();
 
+    rogalik
+        .board
+        .fill_rectangle(Rectangle::new(Point(0, 0), Point(9, 9)), Cell::Floor);
+
     rogalik.render(&mut display);
     print_display(&display);
     while !rogalik.quit {
@@ -272,10 +254,13 @@ fn main() {
         line.clear();
         io::stdin().read_line(&mut line).unwrap();
         for key in line.chars() {
-            if let Some(dir) = Direction::from_key(key) {
-                rogalik.move_to(dir);
-            } else {
-                println!("unknown key {}", key);
+            match key {
+                'k' => rogalik.move_to(Direction::N),
+                'j' => rogalik.move_to(Direction::S),
+                'l' => rogalik.move_to(Direction::E),
+                'h' => rogalik.move_to(Direction::W),
+                'q' => rogalik.quit(),
+                _ => {}
             }
         }
         rogalik.render(&mut display);
