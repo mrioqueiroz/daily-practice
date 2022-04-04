@@ -6,5 +6,6 @@ members = [
 
 exclude = [
   "trust",
-  "rustalik"
+  "rustalik",
+  "todo-rs",
 ]
