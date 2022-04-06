@@ -1,48 +1,50 @@
-#[allow(dead_code)]
+use std::io::{self, BufRead, Write};
+
 #[derive(Debug, PartialEq)]
 enum State {
     Locked,
     Unlocked,
 }
 
-#[allow(dead_code)]
 enum Event {
     Push,
     Coin,
 }
 
-#[allow(dead_code)]
-fn next_state(state: State, event: Event) -> State {
-    match state {
-        State::Locked => match event {
-            Event::Push => State::Locked,
-            Event::Coin => State::Unlocked,
-        },
-        State::Unlocked => match event {
-            Event::Push => State::Locked,
-            Event::Coin => State::Unlocked,
-        },
+fn next_state(event: Event) -> State {
+    match event {
+        Event::Push => State::Locked,
+        Event::Coin => State::Unlocked,
     }
 }
 
 #[test]
-fn on_push_if_locked_stay_locked() {
-    assert_eq!(next_state(State::Locked, Event::Push), State::Locked);
+fn on_push_lock() {
+    assert_eq!(next_state(Event::Push), State::Locked);
 }
 
 #[test]
-fn on_push_if_unlocked_move_to_locked() {
-    assert_eq!(next_state(State::Unlocked, Event::Push), State::Locked);
+fn on_coin_unlock() {
+    assert_eq!(next_state(Event::Coin), State::Unlocked);
 }
 
-#[test]
-fn on_coin_if_locked_move_to_unlocked() {
-    assert_eq!(next_state(State::Locked, Event::Coin), State::Unlocked);
+fn prompt() {
+    print!("> ");
+    io::stdout().flush().unwrap();
 }
 
-#[test]
-fn on_coin_if_unlocked_stay_unlocked() {
-    assert_eq!(next_state(State::Unlocked, Event::Coin), State::Unlocked);
+fn main() {
+    let mut state = State::Locked;
+    prompt();
+    for line in io::stdin().lock().lines() {
+        match line.unwrap().as_str() {
+            "coin" => state = next_state(Event::Coin),
+            "push" => state = next_state(Event::Push),
+            unknown => {
+                eprintln!("unknown event {}", unknown);
+            }
+        }
+        println!("{:?}", state);
+        prompt();
+    }
 }
-
-fn main() {}
