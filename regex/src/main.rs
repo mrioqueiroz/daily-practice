@@ -38,8 +38,9 @@ fn main() {
     prompt();
     for line in io::stdin().lock().lines() {
         match line.unwrap().as_str() {
-            "coin" => state = next_state(Event::Coin),
-            "push" => state = next_state(Event::Push),
+            "c" | "coin" => state = next_state(Event::Coin),
+            "p" | "push" => state = next_state(Event::Push),
+            "q" | "quit" => return,
             unknown => {
                 eprintln!("unknown event {}", unknown);
             }
