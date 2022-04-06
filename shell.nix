@@ -3,6 +3,7 @@
   { } }:
 let
   dev-dependencies = with pkgs; [
+    ncurses
     rustup
     tshark
   ];

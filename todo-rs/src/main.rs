@@ -1,3 +1,6 @@
+use ncurses::*;
+
 fn main() {
-    println!("Hello, world!");
+    initscr();
+    endwin();
 }
