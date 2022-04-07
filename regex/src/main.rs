@@ -1,31 +1,37 @@
 use std::io::{self, BufRead, Write};
 
-#[derive(Debug, PartialEq)]
-enum State {
-    Locked,
-    Unlocked,
-}
+const LOCKED: usize = 0;
+const UNLOCKED: usize = 1;
+const STATES_COUNT: usize = 2;
 
-enum Event {
-    Push,
-    Coin,
-}
+const PUSH: usize = 0;
+const COIN: usize = 1;
+const EVENTS_COUNT: usize = 2;
 
-fn next_state(event: Event) -> State {
-    match event {
-        Event::Push => State::Locked,
-        Event::Coin => State::Unlocked,
-    }
+const FSM: [[usize; EVENTS_COUNT]; STATES_COUNT] = [[LOCKED, UNLOCKED], [LOCKED, UNLOCKED]];
+
+fn next_state(state: usize, event: usize) -> usize {
+    FSM[state][event]
 }
 
 #[test]
-fn on_push_lock() {
-    assert_eq!(next_state(Event::Push), State::Locked);
+fn on_push_lock_if_locked() {
+    assert_eq!(next_state(LOCKED, PUSH), LOCKED);
 }
 
 #[test]
-fn on_coin_unlock() {
-    assert_eq!(next_state(Event::Coin), State::Unlocked);
+fn on_push_lock_if_unlocked() {
+    assert_eq!(next_state(UNLOCKED, PUSH), LOCKED);
+}
+
+#[test]
+fn on_coin_unlock_if_locked() {
+    assert_eq!(next_state(LOCKED, COIN), UNLOCKED);
+}
+
+#[test]
+fn on_coin_unlock_if_unlocked() {
+    assert_eq!(next_state(UNLOCKED, COIN), UNLOCKED);
 }
 
 fn prompt() {
@@ -33,19 +39,27 @@ fn prompt() {
     io::stdout().flush().unwrap();
 }
 
+fn state_to_str(state: usize) -> &'static str {
+    match state {
+        LOCKED => "locked",
+        UNLOCKED => "unlocked",
+        _ => "unknown",
+    }
+}
+
 fn main() {
-    let mut state = State::Locked;
+    let mut state = LOCKED;
     prompt();
     for line in io::stdin().lock().lines() {
         match line.unwrap().as_str() {
-            "c" | "coin" => state = next_state(Event::Coin),
-            "p" | "push" => state = next_state(Event::Push),
+            "c" | "coin" => state = next_state(state, COIN),
+            "p" | "push" => state = next_state(state, PUSH),
             "q" | "quit" => return,
             unknown => {
                 eprintln!("unknown event {}", unknown);
             }
         }
-        println!("{:?}", state);
+        println!("{}", state_to_str(state));
         prompt();
     }
 }
