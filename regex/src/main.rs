@@ -1,65 +1,62 @@
-use std::io::{self, BufRead, Write};
+use std::ops::Range;
 
-const LOCKED: usize = 0;
-const UNLOCKED: usize = 1;
-const STATES_COUNT: usize = 2;
+const FSM_COLUMN_SIZE: usize = 127;
 
-const PUSH: usize = 0;
-const COIN: usize = 1;
-const EVENTS_COUNT: usize = 2;
-
-const FSM: [[usize; EVENTS_COUNT]; STATES_COUNT] = [[LOCKED, UNLOCKED], [LOCKED, UNLOCKED]];
-
-fn next_state(state: usize, event: usize) -> usize {
-    FSM[state][event]
+struct Fsm {
+    columns: Vec<FsmColumn>,
 }
 
-#[test]
-fn on_push_lock_if_locked() {
-    assert_eq!(next_state(LOCKED, PUSH), LOCKED);
+impl Fsm {
+    fn new() -> Self {
+        Self {
+            columns: Vec::new(),
+        }
+    }
+
+    fn push(&mut self, column: FsmColumn) {
+        self.columns.push(column);
+    }
+
+    fn dump(&self) {
+        for row in 0..FSM_COLUMN_SIZE {
+            print!("{:03} = ", row);
+            for col in &self.columns {
+                print!("{:?} ", col.transition[row]);
+            }
+            println!();
+        }
+    }
 }
 
-#[test]
-fn on_push_lock_if_unlocked() {
-    assert_eq!(next_state(UNLOCKED, PUSH), LOCKED);
+type FsmIndex = usize;
+
+#[derive(Debug)]
+struct FsmColumn {
+    transition: [FsmIndex; FSM_COLUMN_SIZE],
 }
 
-#[test]
-fn on_coin_unlock_if_locked() {
-    assert_eq!(next_state(LOCKED, COIN), UNLOCKED);
-}
+impl FsmColumn {
+    fn new() -> Self {
+        Self {
+            transition: [0; FSM_COLUMN_SIZE],
+        }
+    }
 
-#[test]
-fn on_coin_unlock_if_unlocked() {
-    assert_eq!(next_state(UNLOCKED, COIN), UNLOCKED);
-}
-
-fn prompt() {
-    print!("> ");
-    io::stdout().flush().unwrap();
-}
-
-fn state_to_str(state: usize) -> &'static str {
-    match state {
-        LOCKED => "locked",
-        UNLOCKED => "unlocked",
-        _ => "unknown",
+    fn fill_range(&mut self, range: Range<char>, state: FsmIndex) {
+        for i in range {
+            self.transition[i as usize] = state;
+        }
     }
 }
 
 fn main() {
-    let mut state = LOCKED;
-    prompt();
-    for line in io::stdin().lock().lines() {
-        match line.unwrap().as_str() {
-            "c" | "coin" => state = next_state(state, COIN),
-            "p" | "push" => state = next_state(state, PUSH),
-            "q" | "quit" => return,
-            unknown => {
-                eprintln!("unknown event {}", unknown);
-            }
-        }
-        println!("{}", state_to_str(state));
-        prompt();
+    let mut fsm = Fsm::new();
+
+    // FsmColumn 0
+    {
+        let mut col = FsmColumn::new();
+        col.fill_range('a'..'b', 1);
+        fsm.push(col);
     }
+    fsm.dump();
 }
