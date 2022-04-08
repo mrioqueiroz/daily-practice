@@ -1,6 +1,7 @@
 use std::ops::Range;
 
-const FSM_COLUMN_SIZE: usize = 127;
+const FSM_COLUMN_SIZE: usize = 130;
+const FSM_NEW_LINE: usize = FSM_COLUMN_SIZE - 1;
 
 struct Fsm {
     columns: Vec<FsmColumn>,
@@ -19,7 +20,7 @@ impl Fsm {
 
     fn dump(&self) {
         for row in 0..FSM_COLUMN_SIZE {
-            print!("{:03} = ", row);
+            print!("{:03} => ", row);
             for col in &self.columns {
                 print!("{:?} ", col.transition[row]);
             }
@@ -52,11 +53,17 @@ impl FsmColumn {
 fn main() {
     let mut fsm = Fsm::new();
 
-    // FsmColumn 0
-    {
+    let events = vec!['a' as usize, 'b' as usize, 'c' as usize, FSM_NEW_LINE];
+
+    // Failed state
+    fsm.push(FsmColumn::new());
+
+    for event in events {
         let mut col = FsmColumn::new();
-        col.fill_range('a'..'b', 1);
+        // Keep track of the state
+        col.transition[event] = fsm.columns.len() + 1;
         fsm.push(col);
     }
+
     fsm.dump();
 }
