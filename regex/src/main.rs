@@ -50,6 +50,24 @@ impl FsmColumn {
     }
 }
 
+fn match_fsm(fsm: &Fsm, input: &str) -> bool {
+    // Successful state.
+    let mut state = 1;
+    for c in input.chars() {
+        if state == 0 || state >= fsm.columns.len() {
+            break;
+        }
+        state = fsm.columns[state].transition[c as usize];
+    }
+    if state == 0 {
+        return false;
+    }
+    if state < fsm.columns.len() {
+        state = fsm.columns[state].transition[FSM_NEW_LINE]
+    }
+    return state >= fsm.columns.len();
+}
+
 fn main() {
     let mut fsm = Fsm::new();
 
@@ -66,4 +84,9 @@ fn main() {
     }
 
     fsm.dump();
+
+    let inputs = vec!["Hello, World", "abc", "abcd"];
+    for input in inputs.iter() {
+        println!("{:?} => {:?}", input, match_fsm(&fsm, input));
+    }
 }
