@@ -1,5 +1,3 @@
-use std::ops::Range;
-
 const FSM_COLUMN_SIZE: usize = 130;
 const FSM_NEW_LINE: usize = FSM_COLUMN_SIZE - 1;
 
@@ -19,6 +17,11 @@ impl Regex {
             match c {
                 '$' => {
                     col.transition[FSM_NEW_LINE] = fsm.columns.len() + 1;
+                }
+                '.' => {
+                    for i in 32..127 {
+                        col.transition[i] = fsm.columns.len() + 1;
+                    }
                 }
                 _ => {
                     col.transition[c as usize] = fsm.columns.len() + 1;
@@ -75,21 +78,14 @@ impl FsmColumn {
             transition: [0; FSM_COLUMN_SIZE],
         }
     }
-
-    #[allow(dead_code)]
-    fn fill_range(&mut self, range: Range<char>, state: FsmIndex) {
-        for i in range {
-            self.transition[i as usize] = state;
-        }
-    }
 }
 
 fn main() {
-    let regex = Regex::compile("abcdef$");
+    let regex = Regex::compile(".bc$");
 
     regex.dump();
 
-    let inputs = vec!["Hello, World", "abc", "abcd"];
+    let inputs = vec!["Hello, World", "abc", "bbc", "cbc", "cbd", "cbd", "abcd"];
     for input in inputs.iter() {
         println!("{:?} => {:?}", input, regex.match_str(input));
     }
