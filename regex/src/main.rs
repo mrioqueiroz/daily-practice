@@ -1,6 +1,19 @@
 const FSM_COLUMN_SIZE: usize = 130;
 const FSM_NEW_LINE: usize = FSM_COLUMN_SIZE - 1;
 
+#[derive(Copy, Clone, Default, PartialEq, Debug)]
+struct FsmAction {
+    next: FsmIndex,
+    // Tell if will go to the right or not.
+    offset: i32,
+}
+
+// impl FsmAction {
+//     fn default() -> Self {
+//         Self { next: 0, offset: 0 }
+//     }
+// }
+
 struct Regex {
     columns: Vec<FsmColumn>,
 }
@@ -16,18 +29,44 @@ impl Regex {
             let mut col = FsmColumn::new();
             match c {
                 '$' => {
-                    col.transition[FSM_NEW_LINE] = fsm.columns.len() + 1;
+                    col.transition[FSM_NEW_LINE] = FsmAction {
+                        next: fsm.columns.len() + 1,
+                        offset: 1,
+                    };
+                    fsm.columns.push(col);
                 }
                 '.' => {
                     for i in 32..127 {
-                        col.transition[i] = fsm.columns.len() + 1;
+                        col.transition[i] = FsmAction {
+                            next: fsm.columns.len() + 1,
+                            offset: 1,
+                        }
+                    }
+                    fsm.columns.push(col);
+                }
+                // Modifies the previous state.
+                '*' => {
+                    let n = fsm.columns.len();
+                    for t in fsm.columns.last_mut().unwrap().transition.iter_mut() {
+                        if t.next == n {
+                            // Redirects to itself.
+                            t.next = n - 1;
+                        } else if t.next == 0 {
+                            t.next = n;
+                            t.offset = 0;
+                        } else {
+                            unreachable!();
+                        }
                     }
                 }
                 _ => {
-                    col.transition[c as usize] = fsm.columns.len() + 1;
+                    col.transition[c as usize] = FsmAction {
+                        next: fsm.columns.len() + 1,
+                        offset: 1,
+                    };
+                    fsm.columns.push(col);
                 }
             }
-            fsm.columns.push(col)
         }
         fsm
     }
@@ -35,17 +74,26 @@ impl Regex {
     fn match_str(&self, input: &str) -> bool {
         // Successful state.
         let mut state = 1;
-        for c in input.chars() {
-            if state == 0 || state >= self.columns.len() {
-                break;
-            }
-            state = self.columns[state].transition[c as usize];
+        let mut head = 0;
+        let chars = input.chars().collect::<Vec<_>>();
+
+        while 0 < state && state < self.columns.len() {
+            let action = self.columns[state].transition[chars[head] as usize];
+            state = action.next;
+            head = (head as i32 + action.offset) as usize;
         }
+        // for c in input.chars() {
+        //     if state == 0 || state >= self.columns.len() {
+        //         break;
+        //     }
+        //     state = self.columns[state].transition[c as usize];
+        // }
         if state == 0 {
             return false;
         }
         if state < self.columns.len() {
-            state = self.columns[state].transition[FSM_NEW_LINE]
+            let action = self.columns[state].transition[FSM_NEW_LINE];
+            state = action.next;
         }
         state >= self.columns.len()
     }
@@ -58,7 +106,10 @@ impl Regex {
         for row in 0..FSM_COLUMN_SIZE {
             print!("{:03} => ", row);
             for col in &self.columns {
-                print!("{:?} ", col.transition[row]);
+                print!(
+                    "({}, {}) ",
+                    col.transition[row].next, col.transition[row].offset
+                );
             }
             println!();
         }
@@ -67,25 +118,35 @@ impl Regex {
 
 type FsmIndex = usize;
 
-#[derive(Debug)]
+#[derive(Copy, Clone, Debug)]
 struct FsmColumn {
-    transition: [FsmIndex; FSM_COLUMN_SIZE],
+    transition: [FsmAction; FSM_COLUMN_SIZE],
 }
 
 impl FsmColumn {
     fn new() -> Self {
         Self {
-            transition: [0; FSM_COLUMN_SIZE],
+            transition: [Default::default(); FSM_COLUMN_SIZE],
         }
     }
 }
 
 fn main() {
-    let regex = Regex::compile(".bc$");
+    let regex = Regex::compile("a*bc");
 
     regex.dump();
 
-    let inputs = vec!["Hello, World", "abc", "bbc", "cbc", "cbd", "cbd", "abcd"];
+    let inputs = vec![
+        "Hello, World",
+        "abc",
+        "bc",
+        "bbc",
+        "cbc",
+        "cbd",
+        "cbd",
+        "abcd",
+        "aaabc",
+    ];
     for input in inputs.iter() {
         println!("{:?} => {:?}", input, regex.match_str(input));
     }
