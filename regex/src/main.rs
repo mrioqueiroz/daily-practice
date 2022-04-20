@@ -8,12 +8,6 @@ struct FsmAction {
     offset: i32,
 }
 
-// impl FsmAction {
-//     fn default() -> Self {
-//         Self { next: 0, offset: 0 }
-//     }
-// }
-
 struct Regex {
     columns: Vec<FsmColumn>,
 }
@@ -82,12 +76,6 @@ impl Regex {
             state = action.next;
             head = (head as i32 + action.offset) as usize;
         }
-        // for c in input.chars() {
-        //     if state == 0 || state >= self.columns.len() {
-        //         break;
-        //     }
-        //     state = self.columns[state].transition[c as usize];
-        // }
         if state == 0 {
             return false;
         }
