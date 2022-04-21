@@ -70,8 +70,9 @@ impl Regex {
         let mut state = 1;
         let mut head = 0;
         let chars = input.chars().collect::<Vec<_>>();
+        let n = chars.len();
 
-        while 0 < state && state < self.columns.len() {
+        while 0 < state && state < self.columns.len() && head < n {
             let action = self.columns[state].transition[chars[head] as usize];
             state = action.next;
             head = (head as i32 + action.offset) as usize;
@@ -120,7 +121,7 @@ impl FsmColumn {
 }
 
 fn main() {
-    let regex = Regex::compile("a*bc");
+    let regex = Regex::compile("a*bc$");
 
     regex.dump();
 
