@@ -7,7 +7,7 @@ fn main() {
     progress(v);
 }
 
-fn progress(v: Vec<i32>) {
+fn progress<T>(v: Vec<T>) {
     let mut progress_state = 1;
 
     for n in v.iter() {
@@ -17,6 +17,6 @@ fn progress(v: Vec<i32>) {
     }
 }
 
-fn expensive_calculation(_n: &i32) {
+fn expensive_calculation<T>(_n: T) {
     sleep(Duration::from_secs(1));
 }
