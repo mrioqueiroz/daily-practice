@@ -53,6 +53,20 @@ impl Regex {
                         }
                     }
                 }
+                '+' => {
+                    let n = fsm.columns.len();
+                    fsm.columns.push(*fsm.columns.last().unwrap());
+                    for t in fsm.columns.last_mut().unwrap().transition.iter_mut() {
+                        if t.next == n {
+                            // Leave as it is.
+                        } else if t.next == 0 {
+                            t.next = n + 1;
+                            t.offset = 0;
+                        } else {
+                            unreachable!();
+                        }
+                    }
+                }
                 _ => {
                     col.transition[c as usize] = FsmAction {
                         next: fsm.columns.len() + 1,
@@ -121,7 +135,7 @@ impl FsmColumn {
 }
 
 fn main() {
-    let regex = Regex::compile("a*bc$");
+    let regex = Regex::compile("a+bc$");
 
     regex.dump();
 
