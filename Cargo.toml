@@ -7,6 +7,7 @@ members = [
 exclude = [
   "regex",
   "rustalik",
+  "tdapi",
   "todo-rs",
   "trust",
 ]
