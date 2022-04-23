@@ -6,6 +6,7 @@ struct Progress<Iter> {
     iter: Iter,
     progress_state: usize,
     bound: Option<usize>,
+    delims: (char, char),
 }
 
 // For all types Iter, implement Progress of Iter.
@@ -16,6 +17,7 @@ impl<Iter> Progress<Iter> {
             iter,
             progress_state: 0,
             bound: None,
+            delims: ('[', ']'),
         }
     }
 }
@@ -31,7 +33,6 @@ where
 {
     // Add this method to the Progress data structure, but only where this type
     // Iter implements the trait ExactSizeIterator.
-    #[allow(dead_code)]
     fn with_bound(mut self) -> Self {
         self.bound = Some(self.iter.len());
         self
@@ -52,9 +53,11 @@ where
         match self.bound {
             // If we have the bound...
             Some(bound) => println!(
-                "[{}{}]",
+                "{}{}{}{}",
+                self.delims.0,
                 "*".repeat(self.progress_state),
-                " ".repeat(bound - self.progress_state)
+                " ".repeat(bound - self.progress_state),
+                self.delims.1,
             ),
             None => println!("{}", "*".repeat(self.progress_state)),
         }
@@ -100,3 +103,5 @@ fn main() {
         expensive_calculation(&n);
     }
 }
+
+// Customize delimiters.
