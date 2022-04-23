@@ -12,9 +12,9 @@ fn main() {
     progress(h.iter(), expensive_calculation);
 }
 
-fn progress<T, Iter>(iter: Iter, f: fn(T) -> ())
+fn progress<Iter>(iter: Iter, f: fn(Iter::Item) -> ())
 where
-    Iter: Iterator<Item = T>,
+    Iter: Iterator,
 {
     let mut progress_state = 1;
 
