@@ -34,13 +34,31 @@ where
     }
 }
 
+// Make the method progress() work for all types that implement Iterator:
+// For all types Iter, implement the trait ProgressIteratorExt for that
+// quantified type (Iter). We need the Sized bound here because Progress<Self>
+// doesn't have a size known at compile-time.
+trait ProgressIteratorExt: Sized {
+    // Requires a function `progress` that takes an iterator and returns a
+    // Progress of that iterator.
+    fn progress(self) -> Progress<Self>;
+}
+
+// Implement ProgressIteratorExt for all iterators.
+impl<Iter> ProgressIteratorExt for Iter {
+    fn progress(self) -> Progress<Self> {
+        // Just calls the constructor.
+        Progress::new(self)
+    }
+}
+
 fn expensive_calculation<T>(_n: &T) {
     sleep(Duration::from_secs(1));
 }
 
 fn main() {
     let v = vec![1, 2, 3];
-    for n in Progress::new(v.iter()) {
+    for n in v.iter().progress() {
         expensive_calculation(n);
     }
 }
