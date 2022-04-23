@@ -45,7 +45,10 @@ trait ProgressIteratorExt: Sized {
 }
 
 // Implement ProgressIteratorExt for all iterators.
-impl<Iter> ProgressIteratorExt for Iter {
+impl<Iter> ProgressIteratorExt for Iter
+where
+    Iter: Iterator,
+{
     fn progress(self) -> Progress<Self> {
         // Just calls the constructor.
         Progress::new(self)
