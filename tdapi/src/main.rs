@@ -39,6 +39,14 @@ where
     }
 }
 
+impl<Iter> Progress<Iter> {
+    // Customize delimiters.
+    fn with_delims(mut self, delims: (char, char)) -> Self {
+        self.delims = delims;
+        self
+    }
+}
+
 // Make the compiler understand that the progress data structure is an iterator
 // and can be given to a for loop, by satisfying the requirements of the
 // Iterator interface.
@@ -92,9 +100,10 @@ fn expensive_calculation<T>(_n: &T) {
 }
 
 fn main() {
+    let brackets = ('<', '>');
     // Bounded.
     let v = vec![1, 2, 3];
-    for n in v.iter().progress().with_bound() {
+    for n in v.iter().progress().with_bound().with_delims(brackets) {
         expensive_calculation(n);
     }
 
@@ -103,5 +112,3 @@ fn main() {
         expensive_calculation(&n);
     }
 }
-
-// Customize delimiters.
