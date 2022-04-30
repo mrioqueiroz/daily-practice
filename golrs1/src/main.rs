@@ -22,6 +22,7 @@ struct Cell {
 
 #[derive(Clone, Copy, Debug)]
 enum State {
+    BeingBorn,
     Live,
     Dying,
     Dead,
@@ -99,12 +100,12 @@ impl Cell {
     fn calculate_new_state(&self, grid: &Grid) -> State {
         let live_neighbours = self.live_neighbours(grid);
         match self.state {
-            State::Live => match live_neighbours {
-                2 | 3 => self.state,
+            State::BeingBorn | State::Live => match live_neighbours {
+                2 | 3 => State::Live,
                 _ => State::Dying,
             },
-            State::Dead | State::Dying => match live_neighbours {
-                3 => State::Live,
+            State::Dying | State::Dead => match live_neighbours {
+                3 => State::BeingBorn,
                 _ => State::Dead,
             },
         }
@@ -115,7 +116,7 @@ impl State {
     fn as_usize(&self) -> usize {
         match self {
             Self::Dead | Self::Dying => 0,
-            Self::Live => 1,
+            Self::BeingBorn | Self::Live => 1,
         }
     }
 }
@@ -123,7 +124,8 @@ impl State {
 impl fmt::Display for State {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let printable = match *self {
-            State::Live => "*",
+            State::BeingBorn => "*",
+            State::Live => "o",
             State::Dying => "⋅",
             State::Dead => " ",
         };
@@ -143,6 +145,6 @@ fn main() {
         print!("{}", CLEAR);
         gol = gol.compute_new_generation();
         gol.grid.dump();
-        sleep(Duration::from_millis(200));
+        sleep(Duration::from_millis(500));
     }
 }
