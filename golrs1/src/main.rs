@@ -1,12 +1,10 @@
 use std::{fmt, time::SystemTime};
 use std::{thread::sleep, time::Duration};
 
-const SIZE: usize = 35;
+const SIZE: usize = 30;
 const CLEAR: &str = "\x1B[2J\x1B[1;1H";
 
-#[allow(dead_code)]
 struct GameOfLife {
-    generation: usize,
     grid: Grid,
 }
 
@@ -16,7 +14,6 @@ struct Grid {
 
 type Position = (usize, usize);
 
-#[allow(dead_code)]
 #[derive(Clone, Copy, Debug, Default)]
 struct Cell {
     state: State,
@@ -26,18 +23,15 @@ struct Cell {
 #[derive(Clone, Copy, Debug)]
 enum State {
     Live,
+    Dying,
     Dead,
 }
 
 impl GameOfLife {
     fn new() -> Self {
-        Self {
-            grid: Grid::new(),
-            generation: 1,
-        }
+        Self { grid: Grid::new() }
     }
 
-    #[allow(dead_code)]
     fn compute_new_generation(&mut self) -> Self {
         let mut ng = Self::new();
         for row in 0..SIZE {
@@ -86,7 +80,6 @@ impl Cell {
         Self { state, position }
     }
 
-    #[allow(dead_code)]
     fn live_neighbours(&self, grid: &Grid) -> usize {
         let mut live = 0;
         for n_row in &[-1, 0, 1] {
@@ -103,34 +96,17 @@ impl Cell {
         live
     }
 
-    #[allow(dead_code)]
     fn calculate_new_state(&self, grid: &Grid) -> State {
         let live_neighbours = self.live_neighbours(grid);
         match self.state {
             State::Live => match live_neighbours {
                 2 | 3 => self.state,
+                _ => State::Dying,
+            },
+            State::Dead | State::Dying => match live_neighbours {
+                3 => State::Live,
                 _ => State::Dead,
             },
-            State::Dead => match live_neighbours {
-                3 => State::Live,
-                _ => self.state,
-            },
-        }
-    }
-
-    #[allow(dead_code)]
-    fn change_state(&mut self) {
-        match self.state {
-            State::Live => self.state = State::Dead,
-            State::Dead => self.state = State::Live,
-        }
-    }
-
-    #[allow(dead_code)]
-    fn is_alive(&self) -> bool {
-        match self.state {
-            State::Live => true,
-            State::Dead => false,
         }
     }
 }
@@ -138,7 +114,7 @@ impl Cell {
 impl State {
     fn as_usize(&self) -> usize {
         match self {
-            Self::Dead => 0,
+            Self::Dead | Self::Dying => 0,
             Self::Live => 1,
         }
     }
@@ -148,6 +124,7 @@ impl fmt::Display for State {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let printable = match *self {
             State::Live => "*",
+            State::Dying => "⋅",
             State::Dead => " ",
         };
         write!(f, "{printable}")
@@ -162,11 +139,10 @@ impl Default for State {
 
 fn main() {
     let mut gol = GameOfLife::new();
-    gol.grid.dump();
     loop {
         print!("{}", CLEAR);
         gol = gol.compute_new_generation();
         gol.grid.dump();
-        sleep(Duration::from_millis(50));
+        sleep(Duration::from_millis(200));
     }
 }
