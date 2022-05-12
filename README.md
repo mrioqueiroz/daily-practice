@@ -1,1 +1,1 @@
-# Rust Practice
+# Daily Practice

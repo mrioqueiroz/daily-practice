@@ -75,7 +75,7 @@ where
 }
 
 // Is only implemented for the bounded state (when we know the type Bounded is
-// the thing insidedof our Progress data structure).
+// the thing inside of our Progress data structure).
 impl<Iter> Progress<Iter, Bounded> {
     // Customize delimiters.
     fn with_delims(mut self, delims: (char, char)) -> Self {
