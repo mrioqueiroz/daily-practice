@@ -5,7 +5,9 @@ members = [
 ]
 
 exclude = [
+  "call",
   "golrs1",
+  "noq",
   "regex",
   "rustalik",
   "tdapi",
