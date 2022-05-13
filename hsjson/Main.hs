@@ -37,7 +37,7 @@ instance Applicative Parser where
 
 -- Prove that the Parser is a Alternative.
 instance Alternative Parser where
-  empty = Parser $ \_ -> Nothing
+  empty = Parser $ const Nothing
   (Parser p1) <|> (Parser p2) =
     Parser $ \input -> p1 input <|> p2 input
 
@@ -51,11 +51,11 @@ charP x = Parser f
     f [] = Nothing
 
 stringP :: String -> Parser String
-stringP = sequenceA . map charP
+stringP = traverse charP
 
 -- Just need to parse a sequence of characters ("null").
 jsonNull :: Parser JsonValue
-jsonNull = (\_ -> JsonNull) <$> stringP "null"
+jsonNull = JsonNull <$ stringP "null"
 
 jsonBool :: Parser JsonValue
 jsonBool = f <$> (stringP "true" <|> stringP "false")
