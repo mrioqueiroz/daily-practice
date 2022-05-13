@@ -70,8 +70,17 @@ spanP f = Parser $ \input ->
   let (token, rest) = span f input
    in Just (rest, token)
 
+-- Parser combinator.
+notNull :: Parser [a] -> Parser [a]
+notNull (Parser p) =
+  Parser $ \input -> do
+    (input', xs) <- p input
+    if null xs
+       then Nothing
+       else Just (input', xs)
+
 jsonNumber :: Parser JsonValue
-jsonNumber = f <$> spanP isDigit
+jsonNumber = f <$> notNull (spanP isDigit)
   where f ds = JsonNumber $ read ds
 
 jsonValue :: Parser JsonValue
