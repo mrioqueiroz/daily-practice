@@ -84,8 +84,19 @@ jsonNumber = f <$> notNull (spanP isDigit)
   where
     f ds = JsonNumber $ read ds
 
+stringLiteral :: Parser String
+stringLiteral = spanP (/= '"')
+
+-- No support for scaping.
+jsonString :: Parser JsonValue
+jsonString = JsonString <$> (charP '"' *> stringLiteral <* charP '"')
+
 jsonValue :: Parser JsonValue
-jsonValue = jsonNull <|> jsonBool <|> jsonNumber
+jsonValue =
+  jsonNull
+    <|> jsonBool
+    <|> jsonNumber
+    <|> jsonString
 
 main :: IO ()
 main = undefined
