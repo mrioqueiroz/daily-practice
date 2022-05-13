@@ -66,7 +66,7 @@ jsonBool = f <$> (stringP "true" <|> stringP "false")
     f _ = undefined
 
 jsonValue :: Parser JsonValue
-jsonValue = undefined
+jsonValue = jsonNull <|> jsonBool
 
 main :: IO ()
 main = undefined
