@@ -1,5 +1,6 @@
 module Main where
 
+import Control.Applicative
 import Data.Char
 
 -- Define AST.
@@ -34,6 +35,12 @@ instance Applicative Parser where
     (input'', a) <- p2 input'
     Just (input'', f a)
 
+-- Prove that the Parser is a Alternative.
+instance Alternative Parser where
+  empty = Parser $ \_ -> Nothing
+  (Parser p1) <|> (Parser p2) =
+    Parser $ \input -> p1 input <|> p2 input
+
 -- Parse a single character.
 charP :: Char -> Parser Char
 charP x = Parser f
@@ -49,6 +56,14 @@ stringP = sequenceA . map charP
 -- Just need to parse a sequence of characters ("null").
 jsonNull :: Parser JsonValue
 jsonNull = (\_ -> JsonNull) <$> stringP "null"
+
+jsonBool :: Parser JsonValue
+jsonBool = f <$> (stringP "true" <|> stringP "false")
+  where
+    f "true" = JsonBool True
+    f "false" = JsonBool False
+    -- Should never happen.
+    f _ = undefined
 
 jsonValue :: Parser JsonValue
 jsonValue = undefined
