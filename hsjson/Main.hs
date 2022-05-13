@@ -76,15 +76,16 @@ notNull (Parser p) =
   Parser $ \input -> do
     (input', xs) <- p input
     if null xs
-       then Nothing
-       else Just (input', xs)
+      then Nothing
+      else Just (input', xs)
 
 jsonNumber :: Parser JsonValue
 jsonNumber = f <$> notNull (spanP isDigit)
-  where f ds = JsonNumber $ read ds
+  where
+    f ds = JsonNumber $ read ds
 
 jsonValue :: Parser JsonValue
-jsonValue = jsonNull <|> jsonBool
+jsonValue = jsonNull <|> jsonBool <|> jsonNumber
 
 main :: IO ()
 main = undefined
