@@ -91,6 +91,17 @@ stringLiteral = spanP (/= '"')
 jsonString :: Parser JsonValue
 jsonString = JsonString <$> (charP '"' *> stringLiteral <* charP '"')
 
+ws :: Parser String
+ws = spanP isSpace
+
+sepBy :: Parser a -> Parser b -> Parser [b]
+sepBy sep element = (:) <$> element <*> many (sep *> element) <|> pure []
+
+jsonArray :: Parser JsonValue
+jsonArray = JsonArray <$> (charP '[' *> ws *> elements <* ws <* charP ']')
+  where
+    elements = sepBy (ws *> charP ',' <* ws) jsonValue
+
 jsonValue :: Parser JsonValue
 jsonValue =
   jsonNull
