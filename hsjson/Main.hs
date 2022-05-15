@@ -23,23 +23,24 @@ newtype Parser a = Parser
 
 -- Prove that the Parser is a Functor.
 instance Functor Parser where
-  fmap f (Parser p) = Parser $ \input -> do
-    (input', x) <- p input
-    Just (input', f x)
+  fmap f (Parser p) =
+    Parser $ \input -> do
+      (input', x) <- p input
+      Just (input', f x)
 
 -- Prove that the Parser is a Applicative.
 instance Applicative Parser where
   pure x = Parser $ \input -> Just (input, x)
-  (Parser p1) <*> (Parser p2) = Parser $ \input -> do
-    (input', f) <- p1 input
-    (input'', a) <- p2 input'
-    Just (input'', f a)
+  (Parser p1) <*> (Parser p2) =
+    Parser $ \input -> do
+      (input', f) <- p1 input
+      (input'', a) <- p2 input'
+      Just (input'', f a)
 
 -- Prove that the Parser is a Alternative.
 instance Alternative Parser where
   empty = Parser $ const Nothing
-  (Parser p1) <|> (Parser p2) =
-    Parser $ \input -> p1 input <|> p2 input
+  (Parser p1) <|> (Parser p2) = Parser $ \input -> p1 input <|> p2 input
 
 -- Parse a single character.
 charP :: Char -> Parser Char
@@ -66,9 +67,10 @@ jsonBool = f <$> (stringP "true" <|> stringP "false")
     f _ = undefined
 
 spanP :: (Char -> Bool) -> Parser String
-spanP f = Parser $ \input ->
-  let (token, rest) = span f input
-   in Just (rest, token)
+spanP f =
+  Parser $ \input ->
+    let (token, rest) = span f input
+     in Just (rest, token)
 
 -- Parser combinator.
 notNull :: Parser [a] -> Parser [a]
@@ -85,11 +87,11 @@ jsonNumber = f <$> notNull (spanP isDigit)
     f ds = JsonNumber $ read ds
 
 stringLiteral :: Parser String
-stringLiteral = spanP (/= '"')
+stringLiteral = charP '"' *> spanP (/= '"') <* charP '"'
 
 -- No support for scaping.
 jsonString :: Parser JsonValue
-jsonString = JsonString <$> (charP '"' *> stringLiteral <* charP '"')
+jsonString = JsonString <$> stringLiteral
 
 ws :: Parser String
 ws = spanP isSpace
@@ -102,12 +104,20 @@ jsonArray = JsonArray <$> (charP '[' *> ws *> elements <* ws <* charP ']')
   where
     elements = sepBy (ws *> charP ',' <* ws) jsonValue
 
+jsonObject :: Parser JsonValue
+jsonObject =
+  JsonObject
+    <$> (charP '{' *> ws *> sepBy (ws *> charP ',' <* ws) pair <* ws <* charP '}')
+  where
+    pair =
+      (\key _ value -> (key, value)) <$> stringLiteral
+        <*> (ws *> charP ':' <* ws)
+        <*> jsonValue
+
 jsonValue :: Parser JsonValue
 jsonValue =
-  jsonNull
-    <|> jsonBool
-    <|> jsonNumber
-    <|> jsonString
+  jsonNull  <|> jsonBool <|> jsonNumber <|> jsonString <|> jsonArray
+    <|> jsonObject
 
 main :: IO ()
 main = undefined
