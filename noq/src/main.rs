@@ -1,7 +1,7 @@
 use std::{collections::HashMap, fmt::Display};
 
 #[allow(dead_code)]
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 enum Expr {
     Sym(String),
     // Functor (self-referential type)
@@ -53,8 +53,12 @@ fn pattern_match(pattern: &Expr, value: &Expr) -> Option<Bindings> {
         use Expr::*;
         match (pattern, value) {
             (Sym(name), _) => {
-                bindings.insert(name.clone(), value.clone());
-                true
+                if let Some(bound_value) = bindings.get(name) {
+                    bound_value == value
+                } else {
+                    bindings.insert(name.clone(), value.clone());
+                    true
+                }
             }
             (Fun(name1, args1), Fun(name2, args2)) => {
                 if name1 == name2 && args1.len() == args2.len() {
@@ -98,18 +102,15 @@ fn main() {
     };
 
     // swap(pair(a, b))
-    let pattern = swap.head;
+    let pattern = Fun(
+        "foo".to_string(),
+        vec![Sym("x".to_string()), Sym("x".to_string())],
+    );
 
     // swap(pair(f(c), g(d)))
     let value = Fun(
-        "swap".to_string(),
-        vec![Fun(
-            "pair".to_string(),
-            vec![
-                Fun("f".to_string(), vec![Sym("c".to_string())]),
-                Fun("g".to_string(), vec![Sym("d".to_string())]),
-            ],
-        )],
+        "foo".to_string(),
+        vec![Sym("a".to_string()), Sym("a".to_string())],
     );
 
     println!("pattern: {}", pattern);
