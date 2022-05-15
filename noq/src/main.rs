@@ -68,12 +68,12 @@ fn pattern_match(pattern: &Expr, value: &Expr) -> Option<Bindings> {
                     false
                 }
             }
-            (Fun(_, _), Sym(_)) => todo!(),
+            (Fun(_, _), Sym(_)) => false,
         }
     }
 
     let mut bindings = HashMap::new();
-    if pattern_match_impl(&pattern, &value, &mut bindings) {
+    if pattern_match_impl(pattern, value, &mut bindings) {
         Some(bindings)
     } else {
         None
@@ -112,7 +112,14 @@ fn main() {
         )],
     );
 
-    println!("Pattern: {}", pattern);
-    println!("Value: {}", value);
-    println!("{:?}", pattern_match(&pattern, &value));
+    println!("pattern: {}", pattern);
+    println!("value: {}", value);
+    if let Some(bindings) = pattern_match(&pattern, &value) {
+        println!("match");
+        for (key, value) in bindings.iter() {
+            println!("{} => {}", key, value);
+        }
+    } else {
+        println!("no match");
+    }
 }
