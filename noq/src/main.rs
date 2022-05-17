@@ -39,10 +39,50 @@ impl Display for Rule {
     }
 }
 
+fn substitute_bindings(bindings: &Bindings, expr: &Expr) -> Expr {
+    use Expr::*;
+    match expr {
+        Sym(name) => {
+            if let Some(value) = bindings.get(name) {
+                value.clone()
+            } else {
+                expr.clone()
+            }
+        }
+        Fun(name, args) => {
+            let new_name = match bindings.get(name) {
+                Some(Sym(new_name)) => new_name.clone(),
+                None => name.clone(),
+                Some(_) => panic!("expected symbol in the place of the functor name"),
+            };
+            let mut new_args = Vec::new();
+            for arg in args {
+                new_args.push(substitute_bindings(bindings, arg));
+            }
+            Fun(new_name, new_args)
+        }
+    }
+}
+
 impl Rule {
     #[allow(dead_code)]
-    fn apply_all(&self, expr: Expr) -> Expr {
-        todo!()
+    fn apply_all(&self, expr: &Expr) -> Expr {
+        use Expr::*;
+        if let Some(bindings) = pattern_match(&self.head, &self.body) {
+            println!("match: {:?}", bindings);
+            substitute_bindings(&bindings, expr)
+        } else {
+            match expr {
+                Sym(_) => expr.clone(),
+                Fun(name, args) => {
+                    let mut new_args = Vec::new();
+                    for arg in args {
+                        new_args.push(self.apply_all(arg))
+                    }
+                    Fun(name.clone(), new_args)
+                }
+            }
+        }
     }
 }
 
@@ -101,26 +141,21 @@ fn main() {
         ),
     };
 
-    // swap(pair(a, b))
-    let pattern = Fun(
+    let expr = Fun(
         "foo".to_string(),
-        vec![Sym("x".to_string()), Sym("x".to_string())],
+        vec![Fun(
+            "swap".to_string(),
+            vec![Fun(
+                "pair".to_string(),
+                vec![
+                    Fun("f".to_string(), vec![Sym("a".to_string())]),
+                    Fun("g".to_string(), vec![Sym("b".to_string())]),
+                ],
+            )],
+        )],
     );
 
-    // swap(pair(f(c), g(d)))
-    let value = Fun(
-        "foo".to_string(),
-        vec![Sym("a".to_string()), Sym("a".to_string())],
-    );
-
-    println!("pattern: {}", pattern);
-    println!("value: {}", value);
-    if let Some(bindings) = pattern_match(&pattern, &value) {
-        println!("match");
-        for (key, value) in bindings.iter() {
-            println!("{} => {}", key, value);
-        }
-    } else {
-        println!("no match");
-    }
+    println!("rule  : {}", swap);
+    println!("expr  : {}", expr);
+    println!("expr' : {}", swap.apply_all(&expr));
 }
