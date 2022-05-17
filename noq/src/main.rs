@@ -1,4 +1,4 @@
-use std::{collections::HashMap, fmt::Display};
+use std::{collections::HashMap, fmt::Display, iter::Peekable};
 
 #[allow(dead_code)]
 #[derive(Debug, Clone, PartialEq)]
@@ -124,7 +124,48 @@ fn pattern_match(pattern: &Expr, value: &Expr) -> Option<Bindings> {
     }
 }
 
+#[allow(dead_code)]
+#[derive(Debug)]
+enum TokenKind {
+    Sym(String),
+    OpenParen,
+    CloseParen,
+    Comma,
+    Equals,
+}
+
+#[allow(dead_code)]
+#[derive(Debug)]
+struct Token {
+    kind: TokenKind,
+    text: String,
+}
+
+#[allow(dead_code)]
+struct Lexer<Chars: Iterator<Item = char>> {
+    chars: Peekable<Chars>,
+}
+
+impl<Chars: Iterator<Item = char>> Lexer<Chars> {
+    fn from_iter(chars: Chars) -> Self {
+        Self {
+            chars: chars.peekable(),
+        }
+    }
+}
+
+impl<Chars: Iterator<Item = char>> Iterator for Lexer<Chars> {
+    type Item = Token;
+    fn next(&mut self) -> Option<Self::Item> {
+        todo!()
+    }
+}
+
 fn main() {
+    for token in Lexer::from_iter("swap(pair(a, b)) = pair(b, a)".chars()) {
+        println!("{:?}", token);
+    }
+
     use Expr::*;
     // swap(pair(a, b)) = pair(b, a)
     let swap = Rule {
@@ -158,4 +199,27 @@ fn main() {
     println!("rule  : {}", swap);
     println!("expr  : {}", expr);
     println!("expr' : {}", swap.apply_all(&expr));
+
+    //     // swap(pair(a, b))
+    //     let pattern = Fun(
+    //         "foo".to_string(),
+    //         vec![Sym("x".to_string()), Sym("x".to_string())],
+    //     );
+
+    //     // swap(pair(f(c), g(d)))
+    //     let value = Fun(
+    //         "foo".to_string(),
+    //         vec![Sym("a".to_string()), Sym("a".to_string())],
+    //     );
+
+    //     println!("pattern: {}", pattern);
+    //     println!("value: {}", value);
+    //     if let Some(bindings) = pattern_match(&pattern, &value) {
+    //         println!("match");
+    //         for (key, value) in bindings.iter() {
+    //             println!("{} => {}", key, value);
+    //         }
+    //     } else {
+    //         println!("no match");
+    //     }
 }
