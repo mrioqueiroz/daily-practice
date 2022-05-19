@@ -9,7 +9,7 @@ let
   ];
 in pkgs.mkShell {
   name = "daily-practice";
-  buildInputs = [ rust-dependencies ];
+  buildInputs = with pkgs; [ go_1_17 clojure rust-dependencies ];
   shellHook = ''
   '';
   NIX_ENFORCE_PURITY = 0;
